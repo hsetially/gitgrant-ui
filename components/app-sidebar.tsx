@@ -20,7 +20,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-// This is sample data.
+// This is sample data for the sidebar
 const data = {
   user: {
     name: "Davanapally Itesh",
@@ -47,40 +47,39 @@ const data = {
   navMain: [
     {
       title: "Maintainer",
-      url: "#",
+      url: "/dashboard/maintainer",
       icon: SquareTerminal,
-      isActive: true,
       items: [
         {
           title: "Overview",
-          url: "/maintainer",
+          url: "dashboard/maintainer",
         },
         {
           title: "Repositories",
-          url: "/maintainer/repositories",
+          url: "dashboard/maintainer/repositories",
         },
         {
           title: "Grants",
-          url: "/maintainer/grants",
+          url: "dashboard/maintainer/grants",
         },
       ],
     },
     {
       title: "Contributor",
-      url: "#",
+      url: "/dashboard/contributor",
       icon: Settings2,
       items: [
         {
           title: "Overview",
-          url: "/contributor",
+          url: "dashboard/contributor",
         },
         {
           title: "Projects",
-          url: "/contributor/projects",
+          url: "dashboard/contributor/projects",
         },
         {
           title: "Earnings",
-          url: "/contributor/earnings",
+          url: "dashboard/contributor/earnings",
         }
       ],
     },
