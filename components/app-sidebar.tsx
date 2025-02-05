@@ -46,34 +46,42 @@ const data = {
   ],
   navMain: [
     {
-      title: "Available Grants",
+      title: "Maintainer",
       url: "#",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
-          title: "Issues",
-          url: "#",
+          title: "Overview",
+          url: "/maintainer",
         },
         {
-          title: "Pull Requests",
-          url: "#",
+          title: "Repositories",
+          url: "/maintainer/repositories",
+        },
+        {
+          title: "Grants",
+          url: "/maintainer/grants",
         },
       ],
     },
     {
-      title: "Payouts",
+      title: "Contributor",
       url: "#",
       icon: Settings2,
       items: [
         {
-          title: "Contributions",
-          url: "#",
+          title: "Overview",
+          url: "/contributor",
         },
         {
-          title: "Payout Dashboard",
-          url: "#",
+          title: "Projects",
+          url: "/contributor/projects",
         },
+        {
+          title: "Earnings",
+          url: "/contributor/earnings",
+        }
       ],
     },
   ],
