@@ -70,7 +70,7 @@ export default function RepositoriesPage() {
         </Select>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 w-full">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full">
         {repos.map((repo) => (
           <Card key={repo.id} className="p-6">
             <div className="flex flex-col space-y-4">
