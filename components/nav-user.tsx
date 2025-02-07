@@ -7,7 +7,7 @@ import {
   CreditCard,
   LogOut,
 } from "lucide-react"
-
+import { ConnectWalletDialog } from "./ConnectWalletDialog"
 import {
   Avatar,
   AvatarFallback,
@@ -28,6 +28,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useState } from "react"
 
 export function NavUser({
   user,
@@ -36,11 +37,14 @@ export function NavUser({
     name: string
     email: string
     avatar: string
+    id: string
   }
 }) {
   const { isMobile } = useSidebar()
+  const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false)
 
   return (
+    <>
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
@@ -84,7 +88,9 @@ export function NavUser({
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => {
+                setIsWalletDialogOpen(true)
+              }}>
                 <CreditCard />
                 Connect to Web3 wallet
               </DropdownMenuItem>
@@ -102,5 +108,11 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
+    <ConnectWalletDialog 
+      open={isWalletDialogOpen} 
+      onOpenChange={setIsWalletDialogOpen}
+      userId={user.id}
+    />
+  </>
   )
 }
