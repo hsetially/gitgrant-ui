@@ -11,7 +11,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Loader2, Wallet } from "lucide-react"
+import { Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
+
+type Network = {
+  chainId: string
+  name: string
+  currency: string
+  rpcUrl: string
+  blockExplorer: string
+}
+
+const SUPPORTED_NETWORKS: Record<string, Network> = {
+  ethereum: {
+    chainId: "0x1",
+    name: "Ethereum Mainnet",
+    currency: "ETH",
+    rpcUrl: "https://eth-mainnet.g.alchemy.com/v2/your-api-key",
+    blockExplorer: "https://etherscan.io",
+  },
+  polygon: {
+    chainId: "0x89",
+    name: "Polygon Mainnet",
+    currency: "MATIC",
+    rpcUrl: "https://polygon-mainnet.g.alchemy.com/v2/your-api-key",
+    blockExplorer: "https://polygonscan.com",
+  },
+}
 
 interface ConnectWalletDialogProps {
   open: boolean
@@ -22,28 +48,73 @@ interface ConnectWalletDialogProps {
 interface WalletConnectionResponse {
   success: boolean
   message: string
-  walletAddress?: string
+  data?: {
+    walletAddress: string
+    network: string
+  }
 }
 
-export function ConnectWalletDialog({ 
-  open, 
+export function ConnectWalletDialog({
+  open,
   onOpenChange,
-  userId 
+  userId,
 }: ConnectWalletDialogProps) {
   const { toast } = useToast()
   const [isConnecting, setIsConnecting] = useState(false)
+  const [selectedNetwork, setSelectedNetwork] = useState<string>("ethereum")
+
+  const switchNetwork = async (networkName: string): Promise<void> => {
+    if (!window.ethereum) throw new Error("No crypto wallet found")
+    
+    const network = SUPPORTED_NETWORKS[networkName]
+    
+    try {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: network.chainId }],
+      })
+    } catch (switchError) {
+      // This error code indicates that the chain has not been added to MetaMask
+      if ((switchError as { code: number }).code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: network.chainId,
+                chainName: network.name,
+                rpcUrls: [network.rpcUrl],
+                nativeCurrency: {
+                  name: network.currency,
+                  symbol: network.currency,
+                  decimals: 18,
+                },
+                blockExplorerUrls: [network.blockExplorer],
+              },
+            ],
+          })
+        } catch (error) {
+          throw new Error(`Failed to add network: ${error instanceof Error ? error.message : String(error)}`)
+        }
+      }
+      throw switchError
+    }
+  }
 
   const handleConnect = async () => {
     setIsConnecting(true)
     try {
-      if (typeof window.ethereum === "undefined") {
+      if (!window.ethereum) {
         throw new Error("Please install MetaMask to connect your wallet")
       }
 
-      // type assertion for the response from eth_requestAccounts
-      const accounts = await window.ethereum.request({ 
-        method: "eth_requestAccounts" 
-      }) as string[]
+      // Switch to selected network first
+      await switchNetwork(selectedNetwork)
+
+      // Request account access
+      const accounts = (await window.ethereum.request({
+        method: "eth_requestAccounts",
+      })) as string[]
 
       if (!accounts || accounts.length === 0) {
         throw new Error("No accounts found")
@@ -51,7 +122,7 @@ export function ConnectWalletDialog({
 
       const walletAddress = accounts[0]
 
-      // make API call to your backend
+      // Make API call to your backend
       const response = await fetch("/api/connect-wallet", {
         method: "POST",
         headers: {
@@ -60,19 +131,24 @@ export function ConnectWalletDialog({
         body: JSON.stringify({
           walletAddress,
           userId,
+          network: selectedNetwork,
         }),
       })
 
-      const data: WalletConnectionResponse = await response.json()
+      const data = (await response.json()) as WalletConnectionResponse
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || "Failed to connect wallet")
       }
 
       toast({
-        title: "Wallet Connected",
-        description: `Successfully connected wallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`,
+        title: "Wallet Connected Successfully",
+        description: `Connected to ${
+          SUPPORTED_NETWORKS[selectedNetwork].name
+        } with wallet ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`,
+        variant: "default",
       })
+
       onOpenChange(false)
     } catch (error) {
       toast({
@@ -85,28 +161,6 @@ export function ConnectWalletDialog({
     }
   }
 
-//   const getChainDetails = async (): Promise<{ chainId: string; networkName: string }> => {
-//     if (!window.ethereum) {
-//       throw new Error("MetaMask is not installed")
-//     }
-
-//     const chainId = await window.ethereum.request({ 
-//       method: "eth_chainId" 
-//     }) as string
-
-//     const networks: Record<string, string> = {
-//       "0x1": "Ethereum Mainnet",
-//       "0x5": "Goerli Testnet",
-//       "0x89": "Polygon Mainnet",
-//       "0x13881": "Mumbai Testnet",
-//     }
-
-//     return {
-//       chainId,
-//       networkName: networks[chainId] || "Unknown Network",
-//     }
-//   }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -114,21 +168,51 @@ export function ConnectWalletDialog({
           <DialogTitle>Connect Web3 Wallet</DialogTitle>
           <DialogDescription>
             Connect your Web3 wallet to receive rewards for your contributions.
-            Make sure you are connected to the correct network.
+            Select your preferred network below.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col items-center justify-center gap-4 py-4">
-          <Wallet className="h-12 w-12 text-muted-foreground" />
-          <div className="text-sm text-muted-foreground">
-            Supported Networks: Ethereum, Polygon
+
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col space-y-3">
+            {Object.entries(SUPPORTED_NETWORKS).map(([key, network]) => (
+              <Button
+                key={key}
+                variant="outline"
+                className={cn(
+                  "justify-start gap-2",
+                  selectedNetwork === key && "border-primary"
+                )}
+                onClick={() => setSelectedNetwork(key)}
+              >
+                <img
+                  src={`/networks/${key}.svg`}
+                  alt={network.name}
+                  className="h-5 w-5"
+                />
+                {network.name}
+              </Button>
+            ))}
+          </div>
+
+          <div className="rounded-lg border border-muted bg-muted/50 p-3">
+            <p className="text-xs text-muted-foreground">
+              Make sure you have MetaMask installed and are connected to the
+              correct network. Your wallet will be used to receive rewards for your
+              contributions.
+            </p>
           </div>
         </div>
+
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isConnecting}
+          >
             Cancel
           </Button>
-          <Button 
-            onClick={handleConnect} 
+          <Button
+            onClick={handleConnect}
             disabled={isConnecting}
             className="min-w-[120px]"
           >
