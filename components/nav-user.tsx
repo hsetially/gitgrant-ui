@@ -29,6 +29,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
 export function NavUser({
   user,
@@ -40,8 +42,34 @@ export function NavUser({
     id: string
   }
 }) {
+  const router = useRouter()
   const { isMobile } = useSidebar()
   const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false)
+  const { toast } = useToast()
+
+  const handleLogout = async () => {
+    try {
+      // TODO - replace this with actual API call when backend is ready
+      // const response = await fetch('/api/auth/logout', {
+      //   method: 'POST',
+      //   credentials: 'include',
+      // })
+      
+      localStorage.removeItem('github_oauth_state')
+      localStorage.removeItem('github_auth_state')
+      toast({
+        title: "User logged out Successfully",
+        variant: "default",
+      })
+      router.push('/')
+    } catch (error) {
+      console.error('Logout failed:', error)
+      toast({
+        title: "Failed to logout. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
 
   return (
     <>
@@ -100,8 +128,8 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut />
+            <DropdownMenuItem onSelect={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
