@@ -43,17 +43,14 @@ export default function ProjectsPage() {
       contributorsCount: 45,
       technologies: ["React", "TypeScript", "Node.js"],
     },
-    // Add more projects...
   ];
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Available Projects</h1>
       </div>
 
-      {/* Filters */}
       <div className="flex gap-4">
         <div className="relative flex-1">
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -84,8 +81,6 @@ export default function ProjectsPage() {
           </SelectContent>
         </Select>
       </div>
-
-      {/* Projects Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => (
           <Card key={project.id} className="p-6">

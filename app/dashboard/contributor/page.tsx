@@ -62,7 +62,6 @@ export default function ContributorOverviewPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Contributor Dashboard</h1>
         <Button>
@@ -71,7 +70,6 @@ export default function ContributorOverviewPage() {
         </Button>
       </div>
 
-      {/* Stats Overview */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="p-4">
           <div className="flex items-center gap-4">
@@ -119,9 +117,7 @@ export default function ContributorOverviewPage() {
         </Card>
       </div>
 
-      {/* Recent Activity and Projects */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Recent Contributions */}
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Recent Contributions</h2>
           <div className="space-y-4">
@@ -150,7 +146,6 @@ export default function ContributorOverviewPage() {
           </Button>
         </Card>
 
-        {/* Active Projects */}
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Active Projects</h2>
           <div className="space-y-4">
