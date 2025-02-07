@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from "react";
 import { useMaintainer } from "@/contexts/MaintainerContext";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Card } from "@/components/ui/card";
@@ -17,7 +20,6 @@ import {
   CircleIcon,
   DollarSignIcon
 } from "lucide-react";
-import { useState } from "react";
 
 export default function RepositoriesPage() {
   const { repositories, isLoading, error, importRepository } = useMaintainer();

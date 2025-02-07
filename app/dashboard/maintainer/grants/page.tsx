@@ -1,3 +1,5 @@
+'use client'
+
 import { useMaintainer } from "@/contexts/MaintainerContext";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
