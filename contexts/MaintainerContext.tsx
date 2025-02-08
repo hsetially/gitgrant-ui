@@ -27,6 +27,11 @@ interface Grant {
   progress: number;
 }
 
+interface ImportRepositoryData {
+  owner: string;
+  repo: string;
+}
+
 interface MaintainerContextType {
   repositories: Repository[];
   grants: Grant[];
@@ -38,7 +43,7 @@ interface MaintainerContextType {
   };
   isLoading: boolean;
   error: Error | null;
-  importRepository: (repo: Partial<Repository>) => Promise<void>;
+  importRepository: (data: ImportRepositoryData) => Promise<void>;
   createGrant: (grant: Partial<Grant>) => Promise<void>;
 }
 
@@ -50,7 +55,6 @@ const fetchRepositories = async (): Promise<Repository[]> => {
   const githubAuth = localStorage.getItem('github_auth_state');
   if (!githubAuth) throw new Error('Not authenticated');
   
-  // Add actual GitHub API call here
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
@@ -110,7 +114,6 @@ const fetchRepositories = async (): Promise<Repository[]> => {
 };
 
 const fetchGrants = async (): Promise<Grant[]> => {
-  // Simulate API call
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
@@ -195,10 +198,40 @@ export function MaintainerProvider({ children }: { children: ReactNode }) {
     });
 
   const importRepositoryMutation = useMutation({
-    mutationFn: async (repo: Partial<Repository>) => {
-      // Add actual API call here
-      console.log(repo);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    mutationFn: async (data: ImportRepositoryData) => {
+      const authState = JSON.parse(localStorage.getItem('github_auth_state') || '{}');
+      const token = authState.accessToken;
+
+      if (!token) {
+        throw new Error('GitHub authentication required');
+      }
+
+      const response = await fetch(`https://api.github.com/repos/${data.owner}/${data.repo}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch repository');
+      }
+
+      const repoData = await response.json();
+      
+      const newRepo: Repository = {
+        id: repoData.id,
+        name: repoData.name,
+        description: repoData.description || '',
+        stars: repoData.stargazers_count,
+        forks: repoData.forks_count,
+        openIssues: repoData.open_issues_count,
+        activeGrants: 0,
+        totalFunding: 0,
+      };
+
+      // You might want to make an API call to your backend here to store the repository
+      // For now, we'll just invalidate the query to refetch the repositories
+      return newRepo;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['repositories'] });
@@ -223,14 +256,22 @@ export function MaintainerProvider({ children }: { children: ReactNode }) {
     totalFunding: grants.reduce((sum, g) => sum + g.amount, 0),
   };
 
-  const value = {
+  const importRepository = async (data: ImportRepositoryData) => {
+    await importRepositoryMutation.mutateAsync(data);
+  };
+
+  const createGrant = async (grant: Partial<Grant>) => {
+    await createGrantMutation.mutateAsync(grant);
+  };
+
+  const value: MaintainerContextType = {
     repositories,
     grants,
     stats,
     isLoading: isLoadingRepos || isLoadingGrants,
     error: reposError || grantsError,
-    importRepository: importRepositoryMutation.mutateAsync,
-    createGrant: createGrantMutation.mutateAsync,
+    importRepository,
+    createGrant,
   };
 
   return (

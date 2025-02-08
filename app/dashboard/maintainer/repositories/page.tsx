@@ -20,11 +20,13 @@ import {
   CircleIcon,
   DollarSignIcon
 } from "lucide-react";
+import { ImportRepositoryDialog } from "@/components/dialogs/ImportRepositoryDialog";
 
 export default function RepositoriesPage() {
   const { repositories, isLoading, error, importRepository } = useMaintainer();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <div>Error: {error.message}</div>;
@@ -45,7 +47,7 @@ export default function RepositoriesPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Repositories</h1>
-        <Button onClick={() => importRepository({})}>
+        <Button onClick={() => setImportDialogOpen(true)}>
           <GitForkIcon className="mr-2 h-4 w-4" />
           Import Repository
         </Button>
@@ -115,6 +117,11 @@ export default function RepositoriesPage() {
         </Card>
         ))}
       </div>
+      <ImportRepositoryDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onImport={importRepository}
+      />
     </div>
   );
 }
