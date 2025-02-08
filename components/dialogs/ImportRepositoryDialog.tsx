@@ -1,5 +1,4 @@
-'use client'
-
+'use client';
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,9 +23,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { LoadingSpinner } from "@/components/loading-spinner";
 
+function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
+  const match = url.match(
+    /^https?:\/\/github\.com\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)(\/.*)?$/
+  );
+  if (!match) return null;
+  return { owner: match[1], repo: match[2] };
+}
+
 const formSchema = z.object({
-  owner: z.string().min(1, "Owner is required"),
-  repo: z.string().min(1, "Repository name is required"),
+  url: z
+    .string()
+    .url("Please enter a valid GitHub repository URL")
+    .refine((url) => parseGitHubUrl(url) !== null, {
+      message: "The URL must point to a valid GitHub repository",
+    }),
 });
 
 type ImportRepositoryData = z.infer<typeof formSchema>;
@@ -34,7 +45,7 @@ type ImportRepositoryData = z.infer<typeof formSchema>;
 interface ImportRepositoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onImport: (data: ImportRepositoryData) => Promise<void>;
+  onImport: (data: { owner: string; repo: string }) => Promise<void>;
 }
 
 export function ImportRepositoryDialog({
@@ -47,15 +58,18 @@ export function ImportRepositoryDialog({
   const form = useForm<ImportRepositoryData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      owner: "",
-      repo: "",
+      url: "",
     },
   });
 
   const onSubmit = async (data: ImportRepositoryData) => {
     try {
       setIsLoading(true);
-      await onImport(data);
+      const parsedRepo = parseGitHubUrl(data.url);
+      if (!parsedRepo) {
+        throw new Error("Failed to parse repository URL");
+      }
+      await onImport(parsedRepo);
       form.reset();
       onOpenChange(false);
     } catch (error) {
@@ -71,40 +85,27 @@ export function ImportRepositoryDialog({
         <DialogHeader>
           <DialogTitle>Import Repository</DialogTitle>
           <DialogDescription>
-            Enter the repository details to import from GitHub.
+            Enter the GitHub repository URL to import.
           </DialogDescription>
         </DialogHeader>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="owner"
+              name="url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Repository Owner</FormLabel>
+                  <FormLabel>Repository URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., facebook" {...field} />
+                    <Input
+                      placeholder="e.g., https://github.com/facebook/react"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              name="repo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Repository Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., react" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <DialogFooter>
               <Button
                 type="button"
