@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from "react";
 import { useMaintainer } from "@/contexts/MaintainerContext";
 import { StatCard } from "@/components/StatCard";
 import { LoadingSpinner } from "@/components/loading-spinner";
@@ -16,8 +17,8 @@ import {
   CircleIcon
 } from "lucide-react";
 import { ImportRepositoryDialog } from "@/components/dialogs/ImportRepositoryDialog";
-import { useState } from "react";
 import { CreateGrantDialog } from "@/components/dialogs/CreateGrantDialog";
+import { GrantCard } from "@/components/GrantCard";
 
 export default function MaintainerPage() {
   const { 
@@ -29,9 +30,9 @@ export default function MaintainerPage() {
     importRepository,
     createGrant
   } = useMaintainer();
+  
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [createGrantDialogOpen, setCreateGrantDialogOpen] = useState(false);
-
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <div>Error: {error.message}</div>;
@@ -119,9 +120,21 @@ export default function MaintainerPage() {
                       </div>
                     </div>
                   </div>
-                  <Button variant="outline" className="w-full">
-                    View Details
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => window.open(`https://github.com/${repo.name}`, '_blank')}
+                    >
+                      View on GitHub
+                    </Button>
+                    <Button 
+                      className="flex-1"
+                      onClick={() => setCreateGrantDialogOpen(true)}
+                    >
+                      Create Grant
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
@@ -131,41 +144,16 @@ export default function MaintainerPage() {
         <TabsContent value="pending-grants" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 w-full">
             {pendingGrants.map((grant) => (
-              <Card key={grant.id} className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">{grant.title}</h3>
-                    <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs text-yellow-800">
-                      Pending
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Repository: {grant.repository}</p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Amount:</span>
-                      <span className="font-medium">${grant.amount}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Issues:</span>
-                      <span className="font-medium">{grant.issueCount}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Deadline:</span>
-                      <span className="font-medium">
-                        {new Date(grant.deadline).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" className="flex-1">View Issues</Button>
-                    <Button className="flex-1">Allocate Funds</Button>
-                  </div>
-                </div>
-              </Card>
+              <GrantCard 
+                key={grant.id} 
+                grant={grant}
+                showProgress={false}
+              />
             ))}
           </div>
         </TabsContent>
       </Tabs>
+
       <ImportRepositoryDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}

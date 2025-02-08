@@ -1,73 +1,137 @@
+'use client'
+
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  DollarSignIcon,
+  UsersIcon,
+  CalendarIcon,
+  ClockIcon,
+} from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
-interface GrantCardProps {
-  grant: {
-    id: number;
-    title: string;
-    amount: number;
-    issueCount: number;
-    deadline: string;
-    status: string;
-    repo: string;
-  };
+interface Grant {
+  id: number;
+  title: string;
+  description: string;
+  amount: number;
+  repository: string;
+  issueCount: number;
+  contributorCount: number;
+  deadline: string;
+  status: 'active' | 'completed' | 'pending_allocation';
+  progress: number;
 }
 
-export function GrantCard({ grant }: GrantCardProps) {
-  const getBadgeVariant = (status: string) => {
+interface GrantCardProps {
+  grant: Grant;
+  showProgress?: boolean;
+}
+
+export function GrantCard({ grant, showProgress = true }: GrantCardProps) {
+  const router = useRouter();
+
+  const getBadgeVariant = (status: Grant['status']) => {
     switch (status) {
-      case 'pending_allocation':
-        return 'warning';
-      case 'completed':
+      case 'active':
         return 'default';
-      case 'rejected':
-        return 'destructive';
+      case 'completed':
+        return 'secondary';
+      case 'pending_allocation':
+        return 'outline';
       default:
         return 'secondary';
     }
   };
 
+  const formatStatus = (status: Grant['status']): string => {
+    return status.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
+  const handleManageGrant = () => {
+    router.push(`/maintainer/grants/${grant.id}`);
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>{grant.title}</span>
+    <Card className="p-6">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold">{grant.title}</h3>
+            <p className="text-sm text-muted-foreground">{grant.repository}</p>
+          </div>
           <Badge variant={getBadgeVariant(grant.status)}>
-            {grant.status.replace('_', ' ')}
+            {formatStatus(grant.status)}
           </Badge>
-        </CardTitle>
-        <CardDescription>Repository: {grant.repo}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Amount:</span>
-            <span className="font-medium">${grant.amount}</span>
+        </div>
+
+        <p className="text-sm text-muted-foreground">{grant.description}</p>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center text-sm">
+              <DollarSignIcon className="mr-2 h-4 w-4" />
+              ${grant.amount.toLocaleString()}
+            </div>
+            <div className="flex items-center text-sm">
+              <UsersIcon className="mr-2 h-4 w-4" />
+              {grant.contributorCount} contributors
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Issues:</span>
-            <span className="font-medium">{grant.issueCount}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Deadline:</span>
-            <span className="font-medium">
+          <div className="space-y-2">
+            <div className="flex items-center text-sm">
+              <CalendarIcon className="mr-2 h-4 w-4" />
               {new Date(grant.deadline).toLocaleDateString()}
-            </span>
+            </div>
+            <div className="flex items-center text-sm">
+              <ClockIcon className="mr-2 h-4 w-4" />
+              {grant.issueCount} issues
+            </div>
           </div>
         </div>
-      </CardContent>
-      <CardFooter className="flex justify-end space-x-2">
-        <Button variant="outline">View Issues</Button>
-        <Button>Allocate Funds</Button>
-      </CardFooter>
+
+        {showProgress && (
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Progress</span>
+              <span>{grant.progress}%</span>
+            </div>
+            <Progress value={grant.progress} />
+          </div>
+        )}
+
+        <div className="flex space-x-2">
+          {grant.status === 'pending_allocation' && (
+            <Button 
+              className="flex-1"
+              onClick={handleManageGrant}
+            >
+              Allocate Funds
+            </Button>
+          )}
+          {grant.status === 'active' && (
+            <Button 
+              className="flex-1"
+              onClick={handleManageGrant}
+            >
+              Manage Grant
+            </Button>
+          )}
+          {grant.status === 'completed' && (
+            <Button 
+              variant="outline"
+              className="flex-1"
+              onClick={handleManageGrant}
+            >
+              View Details
+            </Button>
+          )}
+        </div>
+      </div>
     </Card>
   );
 }
