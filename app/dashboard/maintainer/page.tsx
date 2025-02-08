@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { ImportRepositoryDialog } from "@/components/dialogs/ImportRepositoryDialog";
 import { useState } from "react";
+import { CreateGrantDialog } from "@/components/dialogs/CreateGrantDialog";
 
 export default function MaintainerPage() {
   const { 
@@ -29,6 +30,8 @@ export default function MaintainerPage() {
     createGrant
   } = useMaintainer();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [createGrantDialogOpen, setCreateGrantDialogOpen] = useState(false);
+
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <div>Error: {error.message}</div>;
@@ -44,10 +47,10 @@ export default function MaintainerPage() {
           <GitForkIcon className="mr-2 h-4 w-4" />
           Import Repository
         </Button>
-          <Button onClick={() => createGrant({})}>
-            <PlusCircleIcon className="mr-2 h-4 w-4" />
-            Create Grant
-          </Button>
+        <Button onClick={() => setCreateGrantDialogOpen(true)}>
+          <PlusCircleIcon className="mr-2 h-4 w-4" />
+          Create New Grant
+        </Button>
         </div>
       </div>
 
@@ -167,6 +170,12 @@ export default function MaintainerPage() {
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
         onImport={importRepository}
+      />
+      <CreateGrantDialog
+        open={createGrantDialogOpen}
+        onOpenChange={setCreateGrantDialogOpen}
+        onSubmit={createGrant}
+        repositories={repositories}
       />
     </div>
   );

@@ -32,6 +32,13 @@ interface ImportRepositoryData {
   repo: string;
 }
 
+interface CreateGrantData {
+  repository: string;
+  issueNumber: string;
+  amount: string;
+  complexity: number;
+}
+
 interface MaintainerContextType {
   repositories: Repository[];
   grants: Grant[];
@@ -44,14 +51,12 @@ interface MaintainerContextType {
   isLoading: boolean;
   error: Error | null;
   importRepository: (data: ImportRepositoryData) => Promise<void>;
-  createGrant: (grant: Partial<Grant>) => Promise<void>;
+  createGrant: (data: CreateGrantData) => Promise<void>;
 }
 
 const MaintainerContext = createContext<MaintainerContextType | undefined>(undefined);
 
-// Mock API calls - replace with actual API calls later
 const fetchRepositories = async (): Promise<Repository[]> => {
-  // Simulate API call
   const githubAuth = localStorage.getItem('github_auth_state');
   if (!githubAuth) throw new Error('Not authenticated');
   
@@ -229,8 +234,6 @@ export function MaintainerProvider({ children }: { children: ReactNode }) {
         totalFunding: 0,
       };
 
-      // You might want to make an API call to your backend here to store the repository
-      // For now, we'll just invalidate the query to refetch the repositories
       return newRepo;
     },
     onSuccess: () => {
@@ -239,10 +242,30 @@ export function MaintainerProvider({ children }: { children: ReactNode }) {
   });
 
   const createGrantMutation = useMutation({
-    mutationFn: async (grant: Partial<Grant>) => {
-      // Add actual API call here
-      console.log(grant);
+    mutationFn: async (data: CreateGrantData) => {
+      const authState = JSON.parse(localStorage.getItem('github_auth_state') || '{}');
+      const token = authState.accessToken;
+
+      if (!token) {
+        throw new Error('GitHub authentication required');
+      }
+
+      // Simulate API call - replace with actual API call
+      const newGrant: Grant = {
+        id: Math.random(),
+        title: `Grant for Issue #${data.issueNumber}`,
+        description: "New grant created",
+        amount: parseInt(data.amount),
+        repository: data.repository,
+        issueCount: 1,
+        contributorCount: 0,
+        deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'pending_allocation',
+        progress: 0,
+      };
+
       await new Promise(resolve => setTimeout(resolve, 1000));
+      return newGrant;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['grants'] });
@@ -260,8 +283,8 @@ export function MaintainerProvider({ children }: { children: ReactNode }) {
     await importRepositoryMutation.mutateAsync(data);
   };
 
-  const createGrant = async (grant: Partial<Grant>) => {
-    await createGrantMutation.mutateAsync(grant);
+  const createGrant = async (data: CreateGrantData) => {
+    await createGrantMutation.mutateAsync(data);
   };
 
   const value: MaintainerContextType = {
@@ -288,3 +311,5 @@ export function useMaintainer() {
   }
   return context;
 }
+
+export type { Repository, Grant, ImportRepositoryData, CreateGrantData };

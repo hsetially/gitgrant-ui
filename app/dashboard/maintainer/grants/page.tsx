@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { CreateGrantDialog } from "@/components/dialogs/CreateGrantDialog";
 
 interface Grant {
   id: number;
@@ -47,6 +48,7 @@ export default function GrantsPage() {
   const { grants, repositories, isLoading, error, createGrant } = useMaintainer();
   const [searchQuery, setSearchQuery] = useState("");
   const [repoFilter, setRepoFilter] = useState("all");
+  const [createGrantDialogOpen, setCreateGrantDialogOpen] = useState(false);
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <div>Error: {error.message}</div>;
@@ -70,7 +72,7 @@ export default function GrantsPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Grants</h1>
-        <Button onClick={() => createGrant({})}>
+        <Button onClick={() => setCreateGrantDialogOpen(true)}>
           <PlusCircleIcon className="mr-2 h-4 w-4" />
           Create New Grant
         </Button>
@@ -181,6 +183,12 @@ export default function GrantsPage() {
           </div>
         </TabsContent>
       </Tabs>
+      <CreateGrantDialog
+        open={createGrantDialogOpen}
+        onOpenChange={setCreateGrantDialogOpen}
+        onSubmit={createGrant}
+        repositories={repositories}
+      />
     </div>
   );
 }
