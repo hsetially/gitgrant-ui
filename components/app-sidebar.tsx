@@ -20,12 +20,12 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-// This is sample data for the sidebar
 const data = {
   user: {
     name: "Davanapally Itesh",
     email: "itesh@gitgrant.com",
     avatar: "/avatars/shadcn.jpg",
+    id: "user_01"
   },
   teams: [
     {
@@ -72,10 +72,6 @@ const data = {
         {
           title: "Overview",
           url: "dashboard/contributor",
-        },
-        {
-          title: "Projects",
-          url: "dashboard/contributor/projects",
         },
         {
           title: "Earnings",
