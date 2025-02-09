@@ -34,9 +34,7 @@ interface ImportRepositoryData {
 
 interface CreateGrantData {
   repository: string;
-  issueNumber: string;
   amount: string;
-  complexity: number;
 }
 
 interface MaintainerContextType {
@@ -253,7 +251,7 @@ export function MaintainerProvider({ children }: { children: ReactNode }) {
       // Simulate API call - replace with actual API call
       const newGrant: Grant = {
         id: Math.random(),
-        title: `Grant for Issue #${data.issueNumber}`,
+        title: `Grant for repo #${data.repository}`,
         description: "New grant created",
         amount: parseInt(data.amount),
         repository: data.repository,

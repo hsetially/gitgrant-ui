@@ -21,12 +21,15 @@ import {
   DollarSignIcon
 } from "lucide-react";
 import { ImportRepositoryDialog } from "@/components/dialogs/ImportRepositoryDialog";
+import { CreateGrantDialog } from "@/components/dialogs/CreateGrantDialog";
 
 export default function RepositoriesPage() {
-  const { repositories, isLoading, error, importRepository } = useMaintainer();
+  const { repositories, isLoading, error, importRepository, createGrant } = useMaintainer();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [createGrantDialogOpen, setCreateGrantDialogOpen] = useState(false);
+  const [selectedRepo, setSelectedRepo] = useState<string>('');
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <div>Error: {error.message}</div>;
@@ -81,46 +84,69 @@ export default function RepositoriesPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full">
         {filteredRepos.map((repo) => (
           <Card key={repo.id} className="p-6">
-          <div className="flex flex-col space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">{repo.name}</h3>
-              <GitForkIcon className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground">{repo.description}</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center text-sm">
-                  <StarIcon className="mr-2 h-4 w-4" />
-                  {repo.stars} stars
+            <div className="flex flex-col space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">{repo.name}</h3>
+                <GitForkIcon className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-sm text-muted-foreground">{repo.description}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center text-sm">
+                    <StarIcon className="mr-2 h-4 w-4" />
+                    {repo.stars} stars
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <GitForkIcon className="mr-2 h-4 w-4" />
+                    {repo.forks} forks
+                  </div>
                 </div>
-                <div className="flex items-center text-sm">
-                  <GitForkIcon className="mr-2 h-4 w-4" />
-                  {repo.forks} forks
+                <div className="space-y-2">
+                  <div className="flex items-center text-sm">
+                    <CircleIcon className="mr-2 h-4 w-4" />
+                    {repo.openIssues} issues
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <DollarSignIcon className="mr-2 h-4 w-4" />
+                    ${repo.totalFunding}
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center text-sm">
-                  <CircleIcon className="mr-2 h-4 w-4" />
-                  {repo.openIssues} issues
-                </div>
-                <div className="flex items-center text-sm">
-                  <DollarSignIcon className="mr-2 h-4 w-4" />
-                  ${repo.totalFunding}
-                </div>
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => window.open(`https://github.com/${repo.name}`, '_blank')}
+                >
+                  View on GitHub
+                </Button>
+                <Button 
+                  className="flex-1"
+                  onClick={() => {
+                    setSelectedRepo(repo.name);
+                    setCreateGrantDialogOpen(true);
+                  }}
+                >
+                  Fund
+                </Button>
               </div>
             </div>
-            <div className="flex space-x-2">
-              <Button variant="outline" className="flex-1">View Details</Button>
-              <Button className="flex-1">Create Grant</Button>
-            </div>
-          </div>
-        </Card>
+          </Card>
         ))}
       </div>
+
       <ImportRepositoryDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
         onImport={importRepository}
+      />
+
+      <CreateGrantDialog
+        open={createGrantDialogOpen}
+        onOpenChange={setCreateGrantDialogOpen}
+        onSubmit={createGrant}
+        repositories={repositories}
+        defaultRepository={selectedRepo}
       />
     </div>
   );

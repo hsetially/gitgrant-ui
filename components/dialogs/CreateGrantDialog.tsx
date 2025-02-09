@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,7 +17,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -36,9 +34,7 @@ import { Repository } from "@/contexts/MaintainerContext";
 
 const formSchema = z.object({
   repository: z.string().min(1, "Repository is required"),
-  issueNumber: z.string().regex(/^\d+$/, "Must be a valid issue number"),
   amount: z.string().regex(/^\d+$/, "Must be a valid amount"),
-  complexity: z.number().min(1).max(5).default(3),
 });
 
 interface CreateGrantDialogProps {
@@ -46,6 +42,7 @@ interface CreateGrantDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: z.infer<typeof formSchema>) => Promise<void>;
   repositories: Repository[];
+  defaultRepository?: string;
 }
 
 export function CreateGrantDialog({
@@ -53,18 +50,23 @@ export function CreateGrantDialog({
   onOpenChange,
   onSubmit,
   repositories,
+  defaultRepository,
 }: CreateGrantDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      repository: "",
-      issueNumber: "",
+      repository: defaultRepository || "",
       amount: "",
-      complexity: 3,
     },
   });
+
+  useEffect(() => {
+    if (defaultRepository) {
+      form.setValue('repository', defaultRepository);
+    }
+  }, [defaultRepository, form]);
 
   const handleSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
@@ -83,9 +85,9 @@ export function CreateGrantDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Grant</DialogTitle>
+          <DialogTitle>Add Funds</DialogTitle>
           <DialogDescription>
-            Set up a new grant for an issue in your repository.
+            Add funds to your repository from your web3 wallet
           </DialogDescription>
         </DialogHeader>
 
@@ -100,6 +102,7 @@ export function CreateGrantDialog({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -114,23 +117,6 @@ export function CreateGrantDialog({
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="issueNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Issue Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="#123" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Enter the GitHub issue number
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -155,34 +141,6 @@ export function CreateGrantDialog({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="complexity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Complexity Level</FormLabel>
-                  <FormControl>
-                    <Slider
-                      min={1}
-                      max={5}
-                      step={1}
-                      value={[field.value]}
-                      onValueChange={(vals) => field.onChange(vals[0])}
-                      className="pt-2"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    {field.value === 1 && "Very Easy"}
-                    {field.value === 2 && "Easy"}
-                    {field.value === 3 && "Medium"}
-                    {field.value === 4 && "Hard"}
-                    {field.value === 5 && "Very Hard"}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <DialogFooter>
               <Button
                 type="button"
@@ -193,7 +151,7 @@ export function CreateGrantDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? <LoadingSpinner /> : "Create Grant"}
+                {isLoading ? <LoadingSpinner /> : "Fund"}
               </Button>
             </DialogFooter>
           </form>
