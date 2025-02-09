@@ -1,4 +1,4 @@
-import { GitHubUser } from "@/utils/storage";
+import { GitHubUser } from "@/types/auth";
 
 export const githubService = {
   async exchangeCodeForToken(code: string, state: string) {

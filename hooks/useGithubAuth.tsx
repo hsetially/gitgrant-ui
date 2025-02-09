@@ -15,6 +15,7 @@ export function useGithubAuth() {
       const { access_token } = await githubService.exchangeCodeForToken(code, state);
       const userData = await githubService.fetchUserData(access_token);
 
+      // call user to story user data
       storage.setAuthState({
         user: userData,
         accessToken: access_token,
