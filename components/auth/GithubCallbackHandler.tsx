@@ -1,18 +1,19 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useGithubAuth } from '@/hooks/useGithubAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { storage } from '@/utils/storage';
 
 export function GitHubCallbackHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { authenticateWithCode, isLoading, error } = useGithubAuth();
+  const { isAuthenticated } = useAuth();
+  const authMutation = useGithubAuth();
 
-  useEffect(() => {
+  const handleAuth = useCallback(async () => {
     const code = searchParams.get('code');
     const error = searchParams.get('error');
     const state = searchParams.get('state');
@@ -33,33 +34,34 @@ export function GitHubCallbackHandler() {
       return;
     }
 
-    if (storage.isAuthenticated()) {
+    if (isAuthenticated) {
       router.push('/dashboard');
       return;
     }
 
-    if (!isLoading) {
-      authenticateWithCode(code, {
-        onSuccess: (user) => {
-          console.log('Authenticated as:', user);
-          router.push('/dashboard');
-        },
-        onError: (error) => {
-          console.error('Authentication failed:', error);
-          router.push('/login?error=authentication_failed');
-        },
-      });
+    try {
+      await authMutation.mutateAsync(code);
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      router.push('/login?error=authentication_failed');
     }
-  }, [searchParams, authenticateWithCode, router, isLoading]);
+  }, [searchParams, router, authMutation, isAuthenticated]);
 
-  if (error) {
+  useEffect(() => {
+    if (!authMutation.isPending) {
+      handleAuth();
+    }
+  }, [handleAuth, authMutation.isPending]);
+
+  if (authMutation.isError) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-semibold mb-4 text-red-600">
             Authentication Failed
           </h1>
-          <p className="text-gray-600 mb-4">{error.message}</p>
+          <p className="text-gray-600 mb-4">{authMutation.error.message}</p>
           <Button 
             variant="outline" 
             onClick={() => router.push('/login')}
@@ -75,7 +77,7 @@ export function GitHubCallbackHandler() {
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center space-y-4">
         <h1 className="text-2xl font-semibold mb-4">
-          {isLoading ? 'Authenticating...' : 'Preparing authentication...'}
+          {authMutation.isPending ? 'Authenticating...' : 'Preparing authentication...'}
         </h1>
         <Loader2 className="h-8 w-8 animate-spin mx-auto" />
       </div>
